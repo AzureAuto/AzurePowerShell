@@ -5,3 +5,4 @@ obj
 *.ldf
 *.mdf
 AzureSQLDatabase/Logging
+*.credential

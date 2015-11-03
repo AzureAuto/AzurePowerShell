@@ -25,11 +25,11 @@
 	Creates a new Azure SQL database in the pre-existing db server.  Sets the database up (e.g. creates tables) and creates
 	a firewall rule on the db server, for the machine running this script.
 .EXAMPLE
-	.\SetupDb.ps1 -pDbServerName "alpha" -pDbServerUsername "big" -pDbServerPassword "bird" -pDDLScripts "script1.sql,script2.sql,script3.sql"
+	.\SetupDb.ps1 -pDbServerName "alpha" -pDbServerUsername "big" -pDbServerPassword "bird" -pDDLScripts "CreateTableFoobar.sql,InsertTableFoobar.sql"
 .DEPENDENCIES
 	Need to run CreateSQLCredential.ps1 first to create secure SQL credential file.
 .SOURCE
-	https://github.com/AzureAutomation/PowerShell/
+	https://github.com/AzureAuto/AzurePowerShell
 .CHANGE_HISTORY:
 	Version		Date			Who			Change Description
 	-------		----------		-------		----------------------------
@@ -66,7 +66,7 @@ param(
 $_ComputerName = $env:COMPUTERNAME
 $_CurrentDateTime = Get-Date -Format s
 $_CurrentDateTime = $_CurrentDateTime -replace ':','_'
-$_PSPath = Join-Path (Split-Path -parent (Split-Path -parent $PSCommandPath)) AzureSQLDatabase
+$_PSPath = Split-Path -Parent $PSCommandPath
 $_LogName = [string]::Format("Logging\{0}_SetupDB_{1}.log", $_CurrentDateTime, $_ComputerName)
 $_LogFile = Join-Path $_PSPath $_LogName
 $_ScriptName = "SetupDB.ps1"
@@ -219,20 +219,23 @@ Function SetupDatabase($DbServerName, $AppDatabaseName, $Username, $Password)
 	{
 		Write-Success "Entered function SetupDatabase."
 
-		if ($pDDLScriptPath -eq $null)
-		{}
+		if ([string]::IsNullOrEmpty($pDDLScriptPath))
+		{
+			# If no path to DDL scripts provided, assume it's in the same directory as this PS script.
+			$sqlPath = $_PSPath
+		}
 		else
 		{
-			$sqlPath = Join-Path (Join-Path (Split-Path -parent (Split-Path -parent $PSCommandPath)) Datamate.SQL) Datamate.SQL
+			$sqlPath = $pDDLScriptPath
 		}
 
-		[Array]$sqlFiles = "CreateTableCategory.sql", "CreateTableFeed.sql", "CreateTableFeedItem.sql", "InsertTableFeed.sql"
+		[Array]$sqlFiles = $pDDLScripts -split ','
 
 		foreach ($sqlFile in $sqlFiles)
 		{
-			$dmddlPath = Join-Path $sqlPath $sqlFile
-			Write-Success "Invoking sqlcmd on file '$dmddlPath'..."
-			Invoke-Sqlcmd -InputFile $dmddlPath -ServerInstance "$DbServerName.database.windows.net" -Database $AppDatabaseName -WarningAction SilentlyContinue -OutputSqlErrors $false -Username $Username -Password $Password -EncryptConnection | Out-Null
+			$ddlPath = Join-Path $sqlPath $sqlFile
+			Write-Success "Invoking sqlcmd on file '$ddlPath'..."
+			Invoke-Sqlcmd -InputFile $ddlPath -ServerInstance "$DbServerName.database.windows.net" -Database $AppDatabaseName -WarningAction SilentlyContinue -OutputSqlErrors $false -Username $Username -Password $Password -EncryptConnection | Out-Null
 		}
 
 		Write-Success "Completed function SetupDatabase."
@@ -268,7 +271,7 @@ Write-Success "====================================="
 
 try
 {
-	$credPath = Join-Path (Split-Path -parent $PSCommandPath) CreateSQLpwCredential.ps1.credential
+	$credPath = Join-Path (Split-Path -parent $PSCommandPath) CreateSQLCredential.ps1.credential
 
 	if ($credPath -eq $null)
 	{
@@ -296,15 +299,22 @@ try
 					# Db has been successfully created so now set it up.
 					Write-Success "Successfully created database '$pDbName' in server '$pDbServerName'."
 
-					$setupDBSuccess = SetupDatabase $pDbServerName $pDbName $pDbServerUsername $pDbServerPassword
-
-					if ($setupDBSuccess -eq $true)
+					if($pDDLScripts)
 					{
-						Write-Success "Successfully setup database '$pDbName' in server '$pDbServerName'."
+						$setupDBSuccess = SetupDatabase $pDbServerName $pDbName $pDbServerUsername $pDbServerPassword
+
+						if ($setupDBSuccess -eq $true)
+						{
+							Write-Success "Successfully setup database '$pDbName' in server '$pDbServerName'."
+						}
+						else
+						{
+							Write-Error "Error :: Failed to setup database '$pDbName' in server '$pDbServerName'."
+						}
 					}
 					else
 					{
-						Write-Error "Error :: Failed to setup database '$pDbName' in server '$pDbServerName'."
+						Write-Warning "Warning :: No DDL scripts specified for database setup so this step did not execute."
 					}
 				}
 				else

@@ -28,7 +28,7 @@
 	http://www.powershellcookbook.com/recipe/PukO/securely-store-credentials-on-disk
 .DEPENDENCIES
 .SOURCE
-	https://github.com/AzurePowerShellAutomation/AzureSQLDatabase
+	https://github.com/AzureAuto/AzurePowerShell
 .CHANGE_HISTORY:
 	Version		Date			Who			Change Description
 	-------		----------		-------		----------------------------
