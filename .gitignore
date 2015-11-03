@@ -1,0 +1,7 @@
+bin
+obj
+*.user
+*.suo
+*.ldf
+*.mdf
+AzureSQLDatabase/Logging
