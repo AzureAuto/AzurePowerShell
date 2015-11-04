@@ -1,2 +1,2 @@
-# Scripts
+# AzureAuto
 Visual Studio 2015 PowerShell project for automating tasks in Azure.
