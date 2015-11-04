@@ -25,7 +25,7 @@
 	Creates a new Azure SQL database in the pre-existing db server.  Sets the database up (e.g. creates tables) and creates
 	a firewall rule on the db server, for the machine running this script.
 .EXAMPLE
-	.\SetupDb.ps1 -pDbServerName "alpha" -pDbServerUsername "big" -pDbServerPassword "bird" -pDDLScripts "CreateTableFoobar.sql,InsertTableFoobar.sql"
+	.\SetupDb.ps1 -pDbServerName "alpha" -pDbServerUsername "big" -pDbServerPassword "bird" -pDDLScripts "CreateTableFoo.sql,InsertTableFoo.sql"
 .DEPENDENCIES
 	Need to run CreateSQLCredential.ps1 first to create secure SQL credential file.
 .SOURCE
@@ -38,7 +38,7 @@
 param(
 	[CmdletBinding(SupportsShouldProcess=$true)]
         
-	# The Azure Data centre location.
+	# The Azure data centre location.
     [string]$pLocation="Southeast Asia",
 
     [Parameter(Mandatory = $true)]
